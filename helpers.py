@@ -1,3 +1,5 @@
+import math
+
 import tensorflow as tf
 import settings
 import random
@@ -64,10 +66,8 @@ def process_path(file_path):
     img = tf.io.read_file(file_path)
     img = tf.image.decode_png(img, channels=3)
     img = tf.image.convert_image_dtype(img, tf.float32)
-
-    img = augment_image(img)
-
     img = tf.image.resize(img, [settings.TARGET_IMAGE_HEIGHT, settings.TARGET_IMAGE_WIDTH])
+
     return img, label
 
 
@@ -81,6 +81,7 @@ def prepare_for_training(ds, cache=True, shuffle_buffer_size=10000):
     ds = ds.shuffle(buffer_size=shuffle_buffer_size)
 
     ds = ds.repeat()
+    # ds = ds.map(augment_image, num_parallel_calls=AUTOTUNE)
     ds = ds.batch(settings.TRAINING_BATCH_SIZE)
     ds = ds.prefetch(buffer_size=AUTOTUNE)
 
