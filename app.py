@@ -104,21 +104,21 @@ callbacks = [
     # )
 ]
 
-# training_dataset_length = tf.data.experimental.cardinality(training_dataset_files).numpy()
-# steps_per_epoch = math.ceil(training_dataset_length // settings.TRAINING_BATCH_SIZE)
-# print(f'Training dataset length: {training_dataset_length}, batch size: {settings.TRAINING_BATCH_SIZE}, steps_per_epoch: {steps_per_epoch}')
-#
-# validation_dataset_length = tf.data.experimental.cardinality(validation_dataset_files).numpy()
-# validation_steps = math.ceil(validation_dataset_length // settings.VALIDATION_BATCH_SIZE)
-# print(f'Validation dataset length: {validation_dataset_length}, batch size: {settings.VALIDATION_BATCH_SIZE}, validation_steps: {validation_steps}')
+training_dataset_length = tf.data.experimental.cardinality(training_dataset_files).numpy()
+steps_per_epoch = math.ceil(training_dataset_length // settings.TRAINING_BATCH_SIZE)
+print(f'Training dataset length: {training_dataset_length}, batch size: {settings.TRAINING_BATCH_SIZE}, steps_per_epoch: {steps_per_epoch}')
 
-history = model.fit(
+validation_dataset_length = tf.data.experimental.cardinality(validation_dataset_files).numpy()
+validation_steps = math.ceil(validation_dataset_length // settings.VALIDATION_BATCH_SIZE)
+print(f'Validation dataset length: {validation_dataset_length}, batch size: {settings.VALIDATION_BATCH_SIZE}, validation_steps: {validation_steps}')
+
+history = model.fit_generator(
     training_dataset,
-    steps_per_epoch=128,
-    epochs=20000,
+    steps_per_epoch=steps_per_epoch,
+    epochs=30,  # 20000,
     verbose=2 if 'PYCHARM_HOSTED' in os.environ else 1,
     validation_data=validation_dataset,
-    validation_steps=128,
+    validation_steps=validation_steps,
     callbacks=callbacks,
     # use_multiprocessing=True,
     # workers=8,
