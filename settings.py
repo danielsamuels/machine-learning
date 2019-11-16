@@ -24,7 +24,7 @@ TRAINING_DIRECTORY = pathlib.Path(os.path.join(BASE_PATH, 'training'))
 VALIDATION_DIRECTORY = pathlib.Path(os.path.join(BASE_PATH, 'validation'))
 
 # Clear out the logs
-LOG_DIRECTORY = os.path.join(CURRENT_DIRECTORY, 'logs')
+LOG_DIRECTORY = os.path.join(CURRENT_DIRECTORY, 'logs', datetime.utcnow().strftime("%Y%m%d-%H%M%S"))
 try:
     shutil.rmtree(LOG_DIRECTORY)
 except FileNotFoundError:
@@ -32,7 +32,7 @@ except FileNotFoundError:
 finally:
     os.mkdir(LOG_DIRECTORY)
 
-CHECKPOINT_DIRECTORY = os.path.join(MODEL_DIRECTORY, datetime.utcnow().strftime('%Y%m%d%H%M'))
+CHECKPOINT_DIRECTORY = os.path.join(MODEL_DIRECTORY, datetime.utcnow().strftime('%Y%m%d-%H%M%S'))
 
 try:
     os.mkdir(CHECKPOINT_DIRECTORY)
