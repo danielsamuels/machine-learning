@@ -87,12 +87,13 @@ def prepare_for_training(ds, cache=True, shuffle_buffer_size=10000):
     return ds
 
 
-def show_batch(image_batch, label_batch):
+def show_batch(image_batch, label_batch, size):
     import matplotlib.pyplot as plt
+    dim = math.ceil(math.sqrt(size))
 
     plt.figure(figsize=(10, 10))
-    for n in range(25):
-        ax = plt.subplot(5, 5, n + 1)
+    for n in range(size):
+        ax = plt.subplot(dim, dim, n + 1)
         plt.imshow(image_batch[n])
         plt.title(settings.CLASS_NAMES[label_batch[n] == 1][0].title())
         plt.axis('off')
