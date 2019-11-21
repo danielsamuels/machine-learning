@@ -1,3 +1,4 @@
+import glob
 import math
 
 import tensorflow as tf
@@ -11,21 +12,32 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 assert tf.test.is_built_with_cuda()
 assert tf.test.is_gpu_available()
 
-# Collect the list of training files and process their paths.
-training_dataset_files = tf.data.Dataset.list_files(os.path.join(settings.TRAINING_DIRECTORY, '*', '*.png'))
-training_dataset_labelled = training_dataset_files.map(helpers.process_path, num_parallel_calls=AUTOTUNE)
-training_dataset = helpers.prepare_for_training(training_dataset_labelled)
+# Training data
+training_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    fill_mode='nearest',
+)
+training_generator = training_image_generator.flow_from_directory(
+    settings.TRAINING_DIRECTORY,
+    target_size=(settings.TARGET_IMAGE_HEIGHT, settings.TARGET_IMAGE_WIDTH),
+    batch_size=settings.TRAINING_BATCH_SIZE,
+    class_mode='binary',
+)
 
-# Collect the validation files.
-validation_dataset_files = tf.data.Dataset.list_files(os.path.join(settings.VALIDATION_DIRECTORY, '*', '*.png'))
-validation_dataset_labelled = validation_dataset_files.map(helpers.process_path, num_parallel_calls=AUTOTUNE)
-validation_dataset = helpers.prepare_for_training(validation_dataset_labelled)
-
-# image_batch, label_batch = next(iter(training_dataset))
-# helpers.show_batch(image_batch.numpy(), label_batch.numpy())
-
-# image_batch, label_batch = next(iter(validation_dataset))
-# helpers.show_batch(image_batch.numpy(), label_batch.numpy())
+# Validation data
+validation_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+validation_generator = validation_image_generator.flow_from_directory(
+    settings.VALIDATION_DIRECTORY,
+    target_size=(settings.TARGET_IMAGE_HEIGHT, settings.TARGET_IMAGE_WIDTH),
+    batch_size=settings.VALIDATION_BATCH_SIZE,
+    class_mode='binary',
+)
 
 use_latest_model_file = False
 if use_latest_model_file:
@@ -98,30 +110,32 @@ callbacks = [
         monitor='val_loss',
         verbose=1,
     ),
-    # tf.keras.callbacks.TensorBoard(
-    #     log_dir=settings.LOG_DIRECTORY,
-    #     histogram_freq=1
-    # )
+    tf.keras.callbacks.TensorBoard(
+        log_dir=settings.LOG_DIRECTORY,
+        histogram_freq=1
+    )
 ]
 
-training_dataset_length = tf.data.experimental.cardinality(training_dataset_files).numpy()
-steps_per_epoch = math.ceil(training_dataset_length // settings.TRAINING_BATCH_SIZE)
+
+training_dataset_length = len(glob.glob(f'{settings.TRAINING_DIRECTORY}/**/*.png'))
+steps_per_epoch = math.ceil(training_dataset_length / settings.TRAINING_BATCH_SIZE)
 print(f'Training dataset length: {training_dataset_length}, batch size: {settings.TRAINING_BATCH_SIZE}, steps_per_epoch: {steps_per_epoch}')
 
-validation_dataset_length = tf.data.experimental.cardinality(validation_dataset_files).numpy()
-validation_steps = math.ceil(validation_dataset_length // settings.VALIDATION_BATCH_SIZE)
+validation_dataset_length = len(glob.glob(f'{settings.VALIDATION_DIRECTORY}/**/*.png'))
+validation_steps = math.ceil(validation_dataset_length / settings.VALIDATION_BATCH_SIZE)
 print(f'Validation dataset length: {validation_dataset_length}, batch size: {settings.VALIDATION_BATCH_SIZE}, validation_steps: {validation_steps}')
 
 history = model.fit_generator(
-    training_dataset,
+    training_generator,
     steps_per_epoch=steps_per_epoch,
     epochs=30,  # 20000,
     verbose=2 if 'PYCHARM_HOSTED' in os.environ else 1,
-    validation_data=validation_dataset,
+    validation_data=validation_generator,
     validation_steps=validation_steps,
     callbacks=callbacks,
-    # use_multiprocessing=True,
-    # workers=8,
+
+    use_multiprocessing=True,
+    workers=8,
 )
 
 model.save(settings.FULL_MODEL_FILE)
