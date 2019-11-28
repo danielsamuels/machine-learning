@@ -11,7 +11,7 @@ SOURCE_IMAGE_HEIGHT = 720
 TARGET_IMAGE_WIDTH = 300
 TARGET_IMAGE_HEIGHT = 169  # math.floor(SOURCE_IMAGE_HEIGHT / (SOURCE_IMAGE_WIDTH / TARGET_IMAGE_WIDTH))
 
-TRAINING_BATCH_SIZE = 32
+TRAINING_BATCH_SIZE = 16
 VALIDATION_BATCH_SIZE = 32
 
 BASE_PATH = os.path.join('H:\\', 'Google Drive', 'Colab Notebooks', 'bacon-images')
@@ -43,5 +43,8 @@ CHECKPOINT_FILE = os.path.join(CHECKPOINT_DIRECTORY, 'epoch-{epoch}_val-loss-{va
 FULL_MODEL_FILE = os.path.join(CHECKPOINT_DIRECTORY, 'final.h5')
 
 # Generate the list of class names from the training directory folders.
-print('Generating class names')
-CLASS_NAMES = np.array([item.name for item in TRAINING_DIRECTORY.glob('*')])
+CLASS_NAMES = np.array([
+    item.name
+    for item in TRAINING_DIRECTORY.glob('*')
+    if item.name not in ['desktop.ini']
+])

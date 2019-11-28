@@ -1,12 +1,12 @@
 import glob
 import math
 
-import tensorflow as tf
 import os
 
-# import helpers
+import helpers
 import settings
 
+import tensorflow as tf
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 assert tf.test.is_built_with_cuda()
@@ -17,12 +17,13 @@ def run():
     # Training data
     training_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
         rescale=1./255,
+        brightness_range=[0.2, 1.0],
         rotation_range=20,
         width_shift_range=0.2,
         height_shift_range=0.2,
         shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True,
+        zoom_range=0.1,
+        # horizontal_flip=True,
         fill_mode='nearest',
     )
     training_generator = training_image_generator.flow_from_directory(
@@ -30,7 +31,10 @@ def run():
         target_size=(settings.TARGET_IMAGE_HEIGHT, settings.TARGET_IMAGE_WIDTH),
         batch_size=settings.TRAINING_BATCH_SIZE,
         class_mode='binary',
+        # classes=list(settings.CLASS_NAMES),
     )
+
+    # helpers.show_generator_batch(training_generator)
 
     # Validation data
     validation_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
@@ -41,6 +45,7 @@ def run():
         target_size=(settings.TARGET_IMAGE_HEIGHT, settings.TARGET_IMAGE_WIDTH),
         batch_size=settings.VALIDATION_BATCH_SIZE,
         class_mode='binary',
+        # classes=list(settings.CLASS_NAMES),
     )
 
     use_latest_model_file = False
@@ -52,26 +57,31 @@ def run():
             tf.keras.layers.Conv2D(16, (3, 3), activation='relu', input_shape=(settings.TARGET_IMAGE_HEIGHT, settings.TARGET_IMAGE_WIDTH, 3)),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPooling2D(2, 2),
+            # tf.keras.layers.Dropout(0.2),
 
             # The second convolution
             tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPooling2D(2, 2),
+            # tf.keras.layers.Dropout(0.2),
 
             # The third convolution
             tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPooling2D(2, 2),
+            # tf.keras.layers.Dropout(0.2),
 
             # The fourth convolution
             tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPooling2D(2, 2),
+            # tf.keras.layers.Dropout(0.2),
 
             # The fifth convolution
             tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
             # tf.keras.layers.BatchNormalization(),
             tf.keras.layers.MaxPooling2D(2, 2),
+            # tf.keras.layers.Dropout(0.2),
 
             # Flatten the results to feed into a DNN
             tf.keras.layers.Flatten(),
@@ -92,11 +102,11 @@ def run():
     )
 
     callbacks = [
-        # tf.keras.callbacks.EarlyStopping(
-        #     monitor='val_loss',
-        #     patience=5,
-        #     verbose=1,
-        # ),
+        tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=5,
+            verbose=1,
+        ),
         tf.keras.callbacks.ReduceLROnPlateau(
             monitor='val_acc',
             patience=2,
@@ -120,21 +130,13 @@ def run():
         )
     ]
 
-    training_dataset_length = len(glob.glob(f'{settings.TRAINING_DIRECTORY}/**/*.png'))
-    steps_per_epoch = math.ceil(training_dataset_length / settings.TRAINING_BATCH_SIZE)
-    print(f'Training dataset length: {training_dataset_length}, batch size: {settings.TRAINING_BATCH_SIZE}, steps_per_epoch: {steps_per_epoch}')
-
-    validation_dataset_length = len(glob.glob(f'{settings.VALIDATION_DIRECTORY}/**/*.png'))
-    validation_steps = math.ceil(validation_dataset_length / settings.VALIDATION_BATCH_SIZE)
-    print(f'Validation dataset length: {validation_dataset_length}, batch size: {settings.VALIDATION_BATCH_SIZE}, validation_steps: {validation_steps}')
-
     model.fit_generator(
         training_generator,
-        steps_per_epoch=steps_per_epoch,
+        # steps_per_epoch=steps_per_epoch,
         epochs=20000,
         verbose=2 if 'PYCHARM_HOSTED' in os.environ else 1,
         validation_data=validation_generator,
-        validation_steps=validation_steps,
+        # validation_steps=validation_steps,
         callbacks=callbacks,
 
         # use_multiprocessing=True,

@@ -1,10 +1,11 @@
+import itertools
 import math
 
-import tensorflow as tf
+# import tensorflow as tf
 import settings
 import random
 
-AUTOTUNE = tf.data.experimental.AUTOTUNE
+# AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 """
 train_datagen = ImageDataGenerator(
@@ -88,16 +89,35 @@ def prepare_for_training(ds, cache=True, shuffle_buffer_size=10000):
     return ds
 
 
-def show_batch(image_batch, label_batch, size):
-    import matplotlib.pyplot as plt
-    dim = math.ceil(math.sqrt(size))
+def show_generator_batch(generator):
+    image_batch, label_batch = next(generator)
+    show_batch(image_batch, label_batch)
 
-    plt.figure(figsize=(10, 10))
-    for n in range(size):
-        ax = plt.subplot(dim, dim, n + 1)
+
+def show_batch(image_batch, label_batch):
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(10,10))
+
+    for n in range(25):
+        ax = plt.subplot(5,5,n+1)
         plt.imshow(image_batch[n])
         plt.title(settings.CLASS_NAMES[label_batch[n] == 1][0].title())
         plt.axis('off')
 
-    # plt.interactive(False)
     plt.show()
+
+
+# def show_batch(image_batch, label_batch, size=25):
+#     import matplotlib.pyplot as plt
+#     dim = math.ceil(math.sqrt(size))
+#
+#     plt.figure(figsize=(10, 10))
+#     for n in range(size):
+#         ax = plt.subplot(dim, dim, n + 1)
+#         plt.imshow(image_batch[n])
+#         print(settings.CLASS_NAMES, label_batch[n])
+#         plt.title(settings.CLASS_NAMES[label_batch[n] == 1][0].title())
+#         plt.axis('off')
+#
+#     # plt.interactive(False)
+#     plt.show()
